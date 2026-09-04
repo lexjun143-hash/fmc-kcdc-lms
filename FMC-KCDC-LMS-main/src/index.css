@@ -1,0 +1,422 @@
+@import "tailwindcss";
+
+/* Lets Tailwind's `dark:` variant key off a `.dark` class on <html>
+   (toggled by ThemeProvider — src/context/ThemeContext.jsx) instead of
+   only `prefers-color-scheme`. The toggle is a user choice, not the OS
+   setting, so the two need to be decoupled. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------
+   Theme tokens — light values on :root, dark overrides on .dark. Every
+   color below is read from one of these variables (either directly, via
+   the `@theme inline` block turning them into real utilities like
+   `bg-card`/`text-ink`/`border-line`, or via the `.dark …` remap further
+   down), so light and dark share this one stylesheet instead of needing
+   parallel copies. See MyAccount.jsx (student/teacher/admin) for a page
+   written directly against these tokens.
+   --------------------------------------------------------------------- */
+:root {
+  --color-page: #f8fafc; /* app background behind everything */
+  --color-card: #ffffff; /* card / panel surfaces */
+  --color-card-muted: #f8fafc; /* subtly recessed surfaces (inputs, table stripes) */
+  --color-card-strong: #f1f5f9; /* hover/active surfaces */
+  --color-line: #e2e8f0; /* default borders */
+  --color-line-soft: #f1f5f9; /* faint dividers */
+  --color-ink: #0f172a; /* headings / primary text */
+  --color-ink-strong: #1e293b; /* strong body text */
+  --color-body: #334155; /* regular body text */
+  --color-muted: #475569; /* secondary text */
+  --color-subtle: #64748b; /* tertiary text, labels */
+  --color-faint: #94a3b8; /* placeholders, disabled text */
+  --color-brand: #15803d; /* green accent (buttons, links, active nav) */
+  --color-brand-strong: #166534; /* green accent hover/emphasis */
+  --color-brand-soft: #f0fdf4; /* green accent background wash */
+  /* Header bar gradient. A muted terracotta, not a pure/saturated orange
+     (was Tailwind's orange-400→orange-500, ~#fb923c→#f97316) — that read
+     as harsh across a full-width bar. Deliberately deeper/less saturated
+     while staying warm, so it's easy on the eyes but still unmistakably
+     "orange" next to the green sidebar/body. */
+  --header-bg: #d2691e; /* deeper terracotta, gradient start */
+  --header-bg-end: #e0662a; /* warmer burnt orange, gradient end */
+  /* Login page hero panel. Deliberately its own pair, not a reuse of
+     --color-brand — that token is tuned to be a bright, readable mint in
+     dark mode (for text/icons sitting ON a dark card), which would be
+     exactly the wrong direction for a large solid panel that white
+     heading text sits on top of. This pair stays a moderately deep green
+     in both themes so the panel/white-text contrast never inverts. */
+  --login-hero-from: #16a34a;
+  --login-hero-to: #15803d;
+}
+
+.dark {
+  --color-page: #0a0f1a;
+  --color-card: #111827;
+  --color-card-muted: #0f172a;
+  --color-card-strong: #1e293b;
+  --color-line: #2b3648;
+  --color-line-soft: #1e293b;
+  --color-ink: #f1f5f9;
+  --color-ink-strong: #e2e8f0;
+  --color-body: #cbd5e1;
+  --color-muted: #a8b6c8;
+  --color-subtle: #8b98ab;
+  --color-faint: #64748b;
+  /* Brighter than the light palette's green-700/800 on purpose — a dark
+     surface needs a lighter, more saturated green to hit the same
+     readable contrast (don't just invert the light values). */
+  --color-brand: #34d399;
+  --color-brand-strong: #10b981;
+  --color-brand-soft: rgba(52, 211, 153, 0.14);
+  /* Deeper and dimmer than the light palette's terracotta on purpose —
+     against a near-black page (--color-page above) the light-mode values
+     would glow. This should read as a muted, receded rust, not a bright
+     accent. */
+  --header-bg: #7a3b12;
+  --header-bg-end: #8c4318;
+  /* A touch deeper than the light pair, same reasoning as --header-bg's
+     dark value — but still a true, moderately deep green, never the
+     bright dark-mode mint --color-brand uses. */
+  --login-hero-from: #14532d;
+  --login-hero-to: #0f3d22;
+}
+
+/* Forwards the tokens above into real Tailwind utilities — bg-page,
+   bg-card, text-ink, border-line, bg-brand, etc. `@theme inline` (rather
+   than `@theme`) keeps these pointing at the live CSS variable instead of
+   baking in a static value at build time, which is what lets the same
+   utility classes repaint when `.dark` toggles. */
+@theme inline {
+  --color-page: var(--color-page);
+  --color-card: var(--color-card);
+  --color-card-muted: var(--color-card-muted);
+  --color-card-strong: var(--color-card-strong);
+  --color-line: var(--color-line);
+  --color-line-soft: var(--color-line-soft);
+  --color-ink: var(--color-ink);
+  --color-ink-strong: var(--color-ink-strong);
+  --color-body: var(--color-body);
+  --color-muted: var(--color-muted);
+  --color-subtle: var(--color-subtle);
+  --color-faint: var(--color-faint);
+  --color-brand: var(--color-brand);
+  --color-brand-strong: var(--color-brand-strong);
+  --color-brand-soft: var(--color-brand-soft);
+  /* Registers from-header/to-header-end/bg-header/etc. Header.jsx is the
+     only consumer today — this is deliberately its own token, not folded
+     into --color-brand, so retuning the header bar again later never
+     risks touching the green accents used everywhere else. */
+  --color-header: var(--header-bg);
+  --color-header-end: var(--header-bg-end);
+  /* Registers from-login-hero/to-login-hero-end for Login.jsx's split-
+     layout hero panel — see the --login-hero-* comment above for why
+     this isn't just --color-brand again. */
+  --color-login-hero: var(--login-hero-from);
+  --color-login-hero-end: var(--login-hero-to);
+}
+
+body {
+  background-color: var(--color-page);
+  color-scheme: light;
+}
+.dark body {
+  color-scheme: dark; /* native form controls, scrollbars, etc. */
+}
+
+/* Inputs/selects/textareas don't inherit a background from their
+   card automatically and default to browser-white — without this
+   they'd render as a white box inside a dark card. */
+input,
+select,
+textarea {
+  background-color: var(--color-card);
+  color: var(--color-body);
+}
+
+/* ---------------------------------------------------------------------
+   Global dark-mode remap. Every screen in this app (Manage Students,
+   Manage Teachers, assignments, announcements, submissions, tables,
+   modals, forms, toasts, ...) was already built against one small,
+   consistent Tailwind color vocabulary: bg-white cards, slate-* text/
+   borders, green-* accents, rose-/amber-/red- status colors. Rather
+   than hand-editing that vocabulary in every file, redefine what those
+   exact utility classes resolve to once `.dark` is active — new markup
+   written with the same vocabulary is covered automatically. Anything
+   that needs a bespoke dark treatment can still layer an explicit
+   `dark:` utility on top (enabled by the custom variant above).
+   --------------------------------------------------------------------- */
+.dark .bg-white {
+  background-color: var(--color-card);
+}
+.dark .bg-slate-50 {
+  background-color: var(--color-card-muted);
+}
+.dark .bg-slate-100,
+.dark .bg-slate-200 {
+  background-color: var(--color-card-strong);
+}
+.dark .bg-slate-300 {
+  background-color: var(--color-line);
+}
+.dark .bg-slate-400 {
+  background-color: var(--color-subtle);
+}
+.dark .hover\:bg-slate-50:hover {
+  background-color: var(--color-card-strong);
+}
+.dark .hover\:bg-slate-100:hover {
+  background-color: var(--color-line);
+}
+
+.dark .text-slate-900 {
+  color: var(--color-ink);
+}
+.dark .text-slate-800 {
+  color: var(--color-ink-strong);
+}
+.dark .text-slate-700 {
+  color: var(--color-body);
+}
+.dark .text-slate-600 {
+  color: var(--color-muted);
+}
+.dark .text-slate-500 {
+  color: var(--color-subtle);
+}
+.dark .text-slate-400,
+.dark .text-slate-300 {
+  color: var(--color-faint);
+}
+.dark .hover\:text-slate-600:hover {
+  color: var(--color-muted);
+}
+.dark .hover\:text-slate-700:hover {
+  color: var(--color-body);
+}
+.dark .hover\:text-slate-800:hover,
+.dark .hover\:text-slate-900:hover {
+  color: var(--color-ink-strong);
+}
+.dark .hover\:text-slate-400:hover {
+  color: var(--color-faint);
+}
+.dark .placeholder\:text-slate-400::placeholder,
+.dark .placeholder-slate-400::placeholder {
+  color: var(--color-faint);
+}
+
+.dark .border-slate-100 {
+  border-color: var(--color-line-soft);
+}
+.dark .border-slate-200,
+.dark .border-slate-300 {
+  border-color: var(--color-line);
+}
+.dark .hover\:border-slate-200:hover,
+.dark .hover\:border-slate-300:hover {
+  border-color: var(--color-line);
+}
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--color-line-soft);
+}
+.dark .ring-slate-200 {
+  --tw-ring-color: var(--color-line);
+}
+.dark .ring-slate-100 {
+  --tw-ring-color: var(--color-line-soft);
+}
+.dark .hover\:bg-slate-200:hover {
+  background-color: var(--color-line);
+}
+
+.dark .bg-green-50,
+.dark .bg-green-100,
+.dark .hover\:bg-green-50:hover,
+.dark .hover\:bg-green-100:hover {
+  background-color: var(--color-brand-soft);
+}
+.dark .bg-green-600,
+.dark .bg-green-700 {
+  background-color: var(--color-brand);
+}
+.dark .bg-green-800,
+.dark .hover\:bg-green-800:hover {
+  background-color: var(--color-brand-strong);
+}
+.dark .text-green-600,
+.dark .text-green-700,
+.dark .hover\:text-green-700:hover {
+  color: #4ade80;
+}
+.dark .text-green-800,
+.dark .hover\:text-green-800:hover {
+  color: #86efac;
+}
+.dark .border-green-500,
+.dark .border-green-700,
+.dark .border-green-200,
+.dark .border-green-400,
+.dark .hover\:border-green-400:hover,
+.dark .focus\:border-green-500:focus {
+  border-color: var(--color-brand);
+}
+.dark .ring-green-100,
+.dark .focus\:ring-green-100:focus {
+  --tw-ring-color: rgba(52, 211, 153, 0.25);
+}
+.dark .ring-green-200 {
+  --tw-ring-color: rgba(52, 211, 153, 0.3);
+}
+.dark .ring-green-500 {
+  --tw-ring-color: var(--color-brand);
+}
+
+.dark .bg-rose-50,
+.dark .bg-rose-100,
+.dark .hover\:bg-rose-50:hover,
+.dark .hover\:bg-rose-100:hover {
+  background-color: rgba(244, 63, 94, 0.12);
+}
+.dark .bg-rose-600,
+.dark .bg-rose-700,
+.dark .hover\:bg-rose-700:hover {
+  background-color: #e11d48;
+}
+.dark .text-rose-600,
+.dark .hover\:text-rose-600:hover {
+  color: #fb7185;
+}
+.dark .text-rose-700 {
+  color: #fda4af;
+}
+.dark .ring-rose-100 {
+  --tw-ring-color: rgba(244, 63, 94, 0.25);
+}
+.dark .ring-rose-200 {
+  --tw-ring-color: rgba(244, 63, 94, 0.3);
+}
+.dark .border-rose-300,
+.dark .hover\:border-rose-300:hover {
+  border-color: rgba(244, 63, 94, 0.5);
+}
+
+.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.12);
+}
+.dark .text-amber-600 {
+  color: #fbbf24;
+}
+.dark .text-amber-700,
+.dark .text-amber-800 {
+  color: #fcd34d;
+}
+.dark .ring-amber-200 {
+  --tw-ring-color: rgba(245, 158, 11, 0.3);
+}
+.dark .border-amber-200 {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.dark .bg-red-50,
+.dark .hover\:bg-red-50:hover {
+  background-color: rgba(239, 68, 68, 0.12);
+}
+.dark .text-red-600,
+.dark .text-red-700 {
+  color: #f87171;
+}
+.dark .bg-red-600,
+.dark .bg-red-700,
+.dark .hover\:bg-red-700:hover {
+  background-color: #dc2626;
+}
+
+/* Registers `animate-float` etc. as Tailwind utilities (Tailwind v4 turns
+   `--animate-*` theme keys into `animate-*` classes automatically).
+   `float` is used by <BibleMotif /> and <AnimatedBible /> for gentle idle
+   motion; `glow-pulse` drives <AnimatedBible />'s halo and the login
+   page's blob glow; `blob` is the slow drift/scale on the login page's
+   background blobs; `sheen` is the diagonal shine sweeping across
+   <AnimatedBible />'s cover; `toast-in` is the slide/fade-in used by
+   <ToastStack /> (src/components/shared/Toast.jsx); `card-in` is the
+   login card's one-time entrance on mount. */
+@theme {
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-glow-pulse: glow-pulse 4s ease-in-out infinite;
+  --animate-blob: blob 18s ease-in-out infinite;
+  --animate-sheen: sheen 6s ease-in-out infinite;
+  --animate-toast-in: toast-in 0.25s ease-out;
+  --animate-card-in: card-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1.5deg);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(4%, -5%) scale(1.08);
+  }
+  66% {
+    transform: translate(-4%, 4%) scale(0.95);
+  }
+}
+
+@keyframes toast-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sheen {
+  0%,
+  75%,
+  100% {
+    transform: translateX(-60px) skewX(-20deg);
+    opacity: 0;
+  }
+  85% {
+    opacity: 0.6;
+  }
+  92% {
+    transform: translateX(150px) skewX(-20deg);
+    opacity: 0;
+  }
+}
