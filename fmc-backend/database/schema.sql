@@ -1,7 +1,7 @@
 -- Run this in phpMyAdmin (or the mysql CLI) against a database named
 -- fmc_kcdc_lms — create that database first if it doesn't exist yet:
-- CREATE DATABASE IF NOT EXISTS fmc_kcdc_lms;
-  USE fmc_kcdc_lms;
+CREATE DATABASE IF NOT EXISTS defaultdb;
+  USE defaultdb;
 --
 -- Note: if you already ran an earlier version of this file (back when
 -- there was a separate `students` table), run
