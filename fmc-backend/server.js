@@ -23,9 +23,17 @@ const app = express();
 // which frontends are expected to call this API. Both Vite ports are
 // listed because Vite falls back to 5174 whenever 5173 is already taken
 // (e.g. a previous dev server still running), and that fallback should
-// never look like a CORS failure. Add the real deployed frontend origin
-// here too once this stops being local-only.
-const allowedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+// never look like a CORS failure. FRONTEND_URL (comma-separated for more
+// than one) adds the real deployed frontend origin(s) on top of the
+// local dev ones, so the same server.js works unmodified in both
+// environments.
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  ...(process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+    : []),
+];
 
 app.use(
   cors({
